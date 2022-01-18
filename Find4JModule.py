@@ -1,6 +1,6 @@
+import csv
 import sys
 import nmap
-import pprint
 
 class IntOutOfBounds(Exception):
     pass
@@ -27,8 +27,27 @@ ______ _           _   ___    ___
     def create_scan(ip, ports):
         """ Function to create scan with user inputs """
         nm = nmap.PortScanner()  
-        nm.scan(ip, ports)
-        print(nm.scaninfo())
+        nm.scan(hosts=ip, arguments='sV -sC')
+        return nm, ip, ports
+
+    def compare_data(self, product):
+        """ Function to compare found products with that of known log4j vulnerabilities """
+        with open("vuln.csv", 'r') as f:
+            reader = csv.reader(f, delimiter="\n")
+            for vuln in reader:
+                if str(product) in str(vuln):
+                    return True
+
+    def print_scan_data(self, scan):
+        """ Function to print product scan data """
+        nm, ip, port = scan
+        vulnerable = []
+        ports = nm[ip]['tcp'].keys()
+        for host in nm.all_hosts():
+            for port in ports:
+                product = nm[host]['tcp'][port]['product']
+                if self.compare_data(product):
+                    vulnerable.append([host, product])
 
     def output_scan_data():
         """ Function to output scan data to csv """
